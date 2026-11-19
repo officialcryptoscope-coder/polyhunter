@@ -1,41 +1,117 @@
 # PolyHunter
-Polygon Smart Contract Security Research Toolkit. Python CLI designed for Termux.
 
-## Wallet Security (menu 3)
-- Checks Polygon chain ID 137, POL balance, transaction count, contract bytecode and latest block.
-- Attempts a recent transaction summary from Polygon Blockscout.
-- Checks one ERC-20 allowance when both token and spender are supplied.
-- Reports limitations; it does not claim to enumerate all approvals or prove compromise.
+Polygon Smart Contract Security Research Toolkit — read-only Python CLI for Termux and desktop Linux.
 
-## Wallet Generator (menu 4)
-- Generate one or multiple EVM wallets.
-- Import a private key into an encrypted local keystore.
-- Derive an account from a mnemonic.
-- Keystore files live in ~/.polyhunter/keystores with restrictive permissions where supported.
-- Secrets are not uploaded. Keep backups securely and never share a private key or mnemonic.
+## Modules
 
-## Termux install
-~~~bash
-pkg update -y
-pkg install -y git python
-git clone https://github.com/officialcryptoscope-coder/polyhunter.git
-cd polyhunter
-chmod +x install.sh
-./install.sh
-python polyhunter.py
-~~~
+1. Smart Contract Scanner: scans local Solidity files or verified Polygon source. Heuristic indicators include access control, privileged functions, reentrancy, low-level calls, delegatecall, selfdestruct, tx.origin, proxies, oracles, flash loans, pause controls, and token restrictions.
+2. Token Risk Analyzer: reads ERC-20 metadata, supply, common owner/pause methods, EIP-1967 proxy slots, and scans verified source when available.
+3. Wallet Security: reads public wallet balance, nonce, bytecode, recent indexed transactions, and optionally one specific ERC-20 token/spender allowance.
+4. Wallet Generator: creates wallets, imports keys into encrypted local keystores, derives mnemonic accounts, and lists local keystores.
 
-## CLI audit
-~~~bash
-python polyhunter.py wallet-audit 0xYOUR_PUBLIC_ADDRESS
-python polyhunter.py wallet-audit 0xYOUR_WALLET --token 0xTOKEN --spender 0xSPENDER
-python polyhunter.py wallet-audit 0xYOUR_PUBLIC_ADDRESS --json reports/audit.json
-~~~
+## Termux installation — copy all commands
 
-Set a custom RPC with POLYGON_RPC_URL. Dependencies are listed in requirements.txt.
+    pkg update -y && pkg upgrade -y
+    pkg install -y git python
+    git clone https://github.com/officialcryptoscope-coder/polyhunter.git
+    cd polyhunter
+    chmod +x install.sh
+    ./install.sh
 
-## Important limitations
-This is a defensive screening tool, not a formal audit or guarantee of wallet safety. Activity data may be incomplete or unavailable. Allowance checks are specific to the token/spender pair supplied. Smart Contract Scanner and Token Risk Analyzer are planned menu entries, not implemented in this release.
+Launch the menu:
 
-## Security
-Never commit keystores, private keys, mnemonics, or environment files. Do not generate wallets on a compromised device.
+    python polyhunter.py
+
+See all command help:
+
+    python polyhunter.py --help
+    python polyhunter.py analyze-file --help
+    python polyhunter.py analyze --help
+    python polyhunter.py token-risk --help
+    python polyhunter.py wallet-audit --help
+
+## 1. Smart Contract Scanner
+
+Scan a Solidity file stored on your phone:
+
+    python polyhunter.py analyze-file contracts/Token.sol
+
+Choose another report folder:
+
+    python polyhunter.py analyze-file contracts/Token.sol --out my-reports
+
+Scan a verified contract deployed on Polygon:
+
+    python polyhunter.py analyze 0xCONTRACT_ADDRESS
+
+If verified source is not available through Blockscout, configure an Etherscan API V2 key (optional):
+
+    export ETHERSCAN_API_KEY="YOUR_ETHERSCAN_API_KEY"
+    python polyhunter.py analyze 0xCONTRACT_ADDRESS
+
+## 2. Token Risk Analyzer
+
+    python polyhunter.py token-risk 0xTOKEN_CONTRACT_ADDRESS
+
+Save output in another directory:
+
+    python polyhunter.py token-risk 0xTOKEN_CONTRACT_ADDRESS --out token-reports
+
+## 3. Wallet Security
+
+Basic public wallet audit:
+
+    python polyhunter.py wallet-audit 0xPUBLIC_WALLET_ADDRESS
+
+Check one token allowance for a specific spender:
+
+    python polyhunter.py wallet-audit 0xWALLET --token 0xTOKEN --spender 0xSPENDER
+
+Save JSON:
+
+    python polyhunter.py wallet-audit 0xPUBLIC_WALLET_ADDRESS --json reports/wallet.json
+
+## 4. Wallet Generator
+
+Open its menu:
+
+    python polyhunter.py wallet
+
+Or choose option 4 in the main menu. Options include generating one/multiple wallets, importing a private key to an encrypted keystore, deriving from a mnemonic, and listing local keystores.
+
+Wallet secrets are handled locally. Never share a private key or recovery phrase. Do not use a compromised phone for valuable wallets. Use a strong unique keystore password and back up recovery material securely.
+
+## Optional Polygon RPC
+
+Default endpoint: https://polygon-rpc.com
+
+If it is rate-limited, set your own endpoint:
+
+    export POLYGON_RPC_URL="https://YOUR_POLYGON_RPC_ENDPOINT"
+    python polyhunter.py token-risk 0xTOKEN_ADDRESS
+
+Or pass it to a single command:
+
+    python polyhunter.py analyze 0xCONTRACT_ADDRESS --rpc "https://YOUR_RPC"
+    python polyhunter.py token-risk 0xTOKEN_ADDRESS --rpc "https://YOUR_RPC"
+
+## Test the scanner
+
+    python -m unittest discover -s tests -v
+
+## Update PolyHunter
+
+From inside the project folder:
+
+    git pull origin main
+    python -m pip install -r requirements.txt --upgrade
+
+## Reports
+
+Scanner and token analyzer save JSON and Markdown reports under reports/ by default. Use --out to choose another folder.
+
+## Limitations
+
+This is defensive screening, not a formal audit. Pattern matches can be false positives or miss vulnerabilities; no match does not mean safe. Generic RPC calls cannot prove token sellability, calculate taxes, establish honeypot status, or measure liquidity and holder concentration. Those require simulation, market data, and deeper review. Optional contract methods may be absent or misleading. Verify findings manually and only assess contracts you are authorized to review.
+
+Scanner and token analyzer do not sign or broadcast transactions. Wallet audit needs public addresses only. Never commit keystores, seed phrases, private keys, or API keys.
