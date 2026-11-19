@@ -1,15 +1,15 @@
-# PolyHunter
+# PolyHunter v0.3.0
 
-Polygon Smart Contract Security Research Toolkit — read-only Python CLI for Termux and desktop Linux.
+Polygon Smart Contract Security Research Toolkit — a read-only Python CLI for Termux and desktop Linux.
 
-## Modules
+## Four modules
 
 1. Smart Contract Scanner: scans local Solidity files or verified Polygon source. Heuristic indicators include access control, privileged functions, reentrancy, low-level calls, delegatecall, selfdestruct, tx.origin, proxies, oracles, flash loans, pause controls, and token restrictions.
 2. Token Risk Analyzer: reads ERC-20 metadata, supply, common owner/pause methods, EIP-1967 proxy slots, and scans verified source when available.
 3. Wallet Security: reads public wallet balance, nonce, bytecode, recent indexed transactions, and optionally one specific ERC-20 token/spender allowance.
 4. Wallet Generator: creates wallets, imports keys into encrypted local keystores, derives mnemonic accounts, and lists local keystores.
 
-## Termux installation — copy all commands
+## Install on Termux — copy these commands
 
     pkg update -y && pkg upgrade -y
     pkg install -y git python
@@ -18,11 +18,18 @@ Polygon Smart Contract Security Research Toolkit — read-only Python CLI for Te
     chmod +x install.sh
     ./install.sh
 
-Launch the menu:
+Start the interactive menu:
 
     python polyhunter.py
 
-See all command help:
+## If PolyHunter is already cloned
+
+    cd ~/polyhunter
+    git pull origin main
+    python -m pip install -r requirements.txt --upgrade
+    python polyhunter.py
+
+## Help commands
 
     python polyhunter.py --help
     python polyhunter.py analyze-file --help
@@ -32,11 +39,18 @@ See all command help:
 
 ## 1. Smart Contract Scanner
 
-Scan a Solidity file stored on your phone:
+To scan a Solidity file saved on your phone, create a folder and open a new file:
+
+    mkdir -p contracts
+    nano contracts/Token.sol
+
+Paste the Solidity source, save with CTRL+O, press ENTER, then exit with CTRL+X.
+
+Run the scanner:
 
     python polyhunter.py analyze-file contracts/Token.sol
 
-Choose another report folder:
+Save reports in a custom folder:
 
     python polyhunter.py analyze-file contracts/Token.sol --out my-reports
 
@@ -53,7 +67,7 @@ If verified source is not available through Blockscout, configure an Etherscan A
 
     python polyhunter.py token-risk 0xTOKEN_CONTRACT_ADDRESS
 
-Save output in another directory:
+Save reports in another directory:
 
     python polyhunter.py token-risk 0xTOKEN_CONTRACT_ADDRESS --out token-reports
 
@@ -95,16 +109,9 @@ Or pass it to a single command:
     python polyhunter.py analyze 0xCONTRACT_ADDRESS --rpc "https://YOUR_RPC"
     python polyhunter.py token-risk 0xTOKEN_ADDRESS --rpc "https://YOUR_RPC"
 
-## Test the scanner
+## Run local tests
 
     python -m unittest discover -s tests -v
-
-## Update PolyHunter
-
-From inside the project folder:
-
-    git pull origin main
-    python -m pip install -r requirements.txt --upgrade
 
 ## Reports
 
@@ -114,4 +121,4 @@ Scanner and token analyzer save JSON and Markdown reports under reports/ by defa
 
 This is defensive screening, not a formal audit. Pattern matches can be false positives or miss vulnerabilities; no match does not mean safe. Generic RPC calls cannot prove token sellability, calculate taxes, establish honeypot status, or measure liquidity and holder concentration. Those require simulation, market data, and deeper review. Optional contract methods may be absent or misleading. Verify findings manually and only assess contracts you are authorized to review.
 
-Scanner and token analyzer do not sign or broadcast transactions. Wallet audit needs public addresses only. Never commit keystores, seed phrases, private keys, or API keys.
+Scanner and token analysis do not sign or broadcast transactions. Wallet audit needs public addresses only. Never commit keystores, seed phrases, private keys, or API keys.
